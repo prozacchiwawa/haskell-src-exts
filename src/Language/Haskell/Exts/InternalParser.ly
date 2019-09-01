@@ -29,7 +29,7 @@
 >               ngparsePragmasAndModuleName
 >               ) where
 >
-> import Language.Haskell.Exts.Syntax hiding ( Type(..), Exp(..), Asst(..), XAttr(..), FieldUpdate(..) )
+> import Language.Haskell.Exts.Syntax hiding ( Type_(..), Exp_(..), Asst_(..), XAttr_(..), FieldUpdate_(..) )
 > import Language.Haskell.Exts.Syntax ( Type, Exp, Asst )
 > import Language.Haskell.Exts.ParseMonad
 > import Language.Haskell.Exts.InternalLexer

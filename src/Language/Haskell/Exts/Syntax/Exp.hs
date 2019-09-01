@@ -47,7 +47,17 @@
 --
 -----------------------------------------------------------------------------
 
-module Language.Haskell.Exts.Syntax.Exp where
+module Language.Haskell.Exts.Syntax.Exp
+  ( Exp_ (..)
+  , Rhs_ (..)
+  , GuardedRhs_ (..)
+  , FieldUpdate_ (..)
+  , Alt_ (..)
+  , Bracket_ (..)
+  , Op (..)
+  , QOp (..)
+  )
+where
 
 import Prelude hiding (id)
 

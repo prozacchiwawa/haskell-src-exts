@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Language.Haskell.Exts.Pretty
@@ -883,9 +884,8 @@ instance Pretty (MaybePromotedName l) where
   pretty (PromotedName _ q) = char '\'' <> ppQNameInfix q
   pretty (UnpromotedName _ q) = ppQNameInfix q
 
-
-instance  Pretty (Promoted l) where
-  pretty p =
+showPromoted :: Promoted_ Exp l -> Doc
+showPromoted p =
     case p of
       PromotedInteger _ n _ -> integer n
       PromotedString _ s _ -> doubleQuotes $ text s
@@ -899,6 +899,9 @@ instance  Pretty (Promoted l) where
     where
       addQuote True doc = char '\'' <> doc
       addQuote False doc = doc
+
+instance Pretty (Promoted_ Exp l) where
+  pretty = showPromoted
 
 instance  Pretty (TyVarBind l) where
         pretty (KindedVar _ var kind) = parens $ myFsep [pretty var, text "::", pretty kind]
@@ -1700,7 +1703,7 @@ instance SrcInfo loc => Pretty (P.PType loc) where
         prettyPrec _ (P.TyPred _ asst) = pretty asst
         prettyPrec _ (P.TyInfix _ a op b) = myFsep [pretty a, pretty op, pretty b]
         prettyPrec _ (P.TyKind _ t k) = parens (myFsep [pretty t, text "::", pretty k])
-        prettyPrec _ (P.TyPromoted _ p) = pretty p
+        prettyPrec _ (P.TyPromoted _ p) = showPromoted p
         prettyPrec _ (P.TySplice _ s) = pretty s
         prettyPrec _ (P.TyBang _ b u t) = pretty u <+> pretty b <> prettyPrec prec_atype t
         prettyPrec _ (P.TyWildCard _ mn) = char '_' <> maybePP pretty mn

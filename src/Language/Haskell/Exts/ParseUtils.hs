@@ -81,9 +81,8 @@ module Language.Haskell.Exts.ParseUtils (
     , pexprToQName
     ) where
 
-import Language.Haskell.Exts.Syntax hiding ( Type(..), Asst(..), Exp(..), FieldUpdate(..), XAttr(..), Context(..) )
-import qualified Language.Haskell.Exts.Syntax as S ( Type(..), Asst(..), Exp(..), FieldUpdate(..), XAttr(..), Context(..), Role(..), PatternSynDirection(..))
-
+import Language.Haskell.Exts.Syntax hiding ( Type_(..), Asst_(..), Exp_(..), FieldUpdate_(..), XAttr_(..), Context_(..) )
+import qualified Language.Haskell.Exts.Syntax as S ( Type(..), Type_(..), Asst(..), Asst_(..), Exp(..), Exp_(..), FieldUpdate(..), FieldUpdate_(..), XAttr(..), XAttr_(..), Context(..), Context_(..), Role(..), PatternSynDirection(..))
 import Language.Haskell.Exts.ParseSyntax
 import Language.Haskell.Exts.ParseMonad
 import Language.Haskell.Exts.Pretty

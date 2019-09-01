@@ -2,7 +2,7 @@
 {-# OPTIONS_HADDOCK hide #-}
 module Language.Haskell.Exts.ParseSyntax where
 
-import Language.Haskell.Exts.Syntax hiding ( Type(..), Asst(..), Exp(..), FieldUpdate(..), XAttr(..), Context(..) )
+import Language.Haskell.Exts.Syntax hiding ( Type_(..), Asst_(..), Exp_(..), FieldUpdate_(..), XAttr_(..), Context_(..) )
 import qualified Language.Haskell.Exts.Syntax as S ( Type(..), Promoted(..) )
 
 ---------------------------------------
