@@ -122,62 +122,43 @@ import Data.Foldable (Foldable)
 import Data.Traversable (Traversable)
 #endif
 
--- | The name of a Haskell module.
-data ModuleName l = ModuleName l String
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
+import Language.Haskell.Exts.Syntax.XName
+import Language.Haskell.Exts.Syntax.XAttr
+import Language.Haskell.Exts.Syntax.PXAttr
+import Language.Haskell.Exts.Syntax.Pattern
+import Language.Haskell.Exts.Syntax.Exp
+import Language.Haskell.Exts.Syntax.Names
+import Language.Haskell.Exts.Syntax.Boxed
+import Language.Haskell.Exts.Syntax.Literal
+import Language.Haskell.Exts.Syntax.Type
+import Language.Haskell.Exts.Syntax.Binds
+import Language.Haskell.Exts.Syntax.Stmt
+import Language.Haskell.Exts.Syntax.PXAttr
+import Language.Haskell.Exts.Syntax.Sign
+import Language.Haskell.Exts.Syntax.Splice
 
--- | Constructors with special syntax.
--- These names are never qualified, and always refer to builtin type or
--- data constructors.
-data SpecialCon l
-    = UnitCon l             -- ^ unit type and data constructor @()@
-    | ListCon l             -- ^ list type and data constructor @[]@
-    | FunCon  l             -- ^ function type constructor @->@
-    | TupleCon l Boxed Int  -- ^ /n/-ary tuple type and data
-                            --   constructors @(,)@ etc, possibly boxed @(\#,\#)@
-    | Cons l                -- ^ list data constructor @(:)@
-    | UnboxedSingleCon l    -- ^ unboxed singleton tuple constructor @(\# \#)@
-    | ExprHole l            -- ^ An expression hole _
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | This type is used to represent qualified variables, and also
--- qualified constructors.
-data QName l
-    = Qual    l (ModuleName l) (Name l) -- ^ name qualified with a module name
-    | UnQual  l                (Name l) -- ^ unqualified local name
-    | Special l (SpecialCon l)          -- ^ built-in constructor with special syntax
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | This type is used to represent variables, and also constructors.
-data Name l
-    = Ident  l String   -- ^ /varid/ or /conid/.
-    | Symbol l String   -- ^ /varsym/ or /consym/
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An implicit parameter name.
-data IPName l
-    = IPDup l String -- ^ ?/ident/, non-linear implicit parameter
-    | IPLin l String -- ^ %/ident/, linear implicit parameter
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Possibly qualified infix operators (/qop/), appearing in expressions.
-data QOp l
-    = QVarOp l (QName l) -- ^ variable operator (/qvarop/)
-    | QConOp l (QName l) -- ^ constructor operator (/qconop/)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Operators appearing in @infix@ declarations are never qualified.
-data Op l
-    = VarOp l (Name l)    -- ^ variable operator (/varop/)
-    | ConOp l (Name l)    -- ^ constructor operator (/conop/)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A name (/cname/) of a component of a class or data type in an @import@
--- or export specification.
-data CName l
-    = VarName l (Name l) -- ^ name of a method or field
-    | ConName l (Name l) -- ^ name of a data constructor
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
+type Exp = Exp_ Decl
+type Pat = Pat__ Exp Decl
+type RPat = RPat__ Exp Decl
+type XAttr = XAttr_ Exp
+type Type = Type_ Exp
+type Kind = Type
+type TyVarBind = TyVarBind_ Exp
+type Rhs = Rhs_ Decl
+type Context = Context_ Exp
+type Binds = Binds__ Exp Decl
+type IPBind = IPBind_ Exp
+type GuardedRhs = GuardedRhs_ Decl
+type Asst = Asst_ Exp
+type Promoted = Promoted_ Decl
+type Stmt = Stmt_ Decl
+type QualStmt = QualStmt_ Decl
+type FieldUpdate = FieldUpdate_ Decl
+type Alt = Alt_ Decl
+type PatField = PatField__ Exp Decl
+type PXAttr = PXAttr___ Pat
+type Bracket = Bracket_ Decl
+type Splice = Splice_ Exp
 
 -- | A complete Haskell source module.
 data Module l
@@ -493,16 +474,6 @@ data DerivStrategy l
   | DerivVia l (Type l) -- ^ @-XDerivingVia@
   deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
 
--- | A binding group inside a @let@ or @where@ clause.
-data Binds l
-    = BDecls  l [Decl l]     -- ^ An ordinary binding group
-    | IPBinds l [IPBind l]   -- ^ A binding group for implicit parameters
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A binding of an implicit parameter.
-data IPBind l = IPBind l (IPName l) (Exp l)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
 -- | Clauses of a function binding.
 data Match l
      = Match l      (Name l) [Pat l]         (Rhs l) {-where-} (Maybe (Binds l))
@@ -589,248 +560,10 @@ data InstDecl l
             -- ^ an associated data type implemented using GADT style
   deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
 
--- | The type of a constructor argument or field, optionally including
---   a strictness annotation.
-data BangType l
-     = BangedTy   l -- ^ strict component, marked with \"@!@\"
-     | LazyTy     l -- ^ lazy component, marked with \"@~@\"
-     | NoStrictAnnot l -- ^ No strictness information
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
-data Unpackedness l
-    = Unpack l -- ^ \"@{-\# UNPACK \#-}@\"
-    | NoUnpack l -- ^ \"@{-\# NOUNPACK \#-}@\"
-    | NoUnpackPragma l -- ^ No unpack pragma
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | The right hand side of a function binding, pattern binding, or a case
---   alternative.
-data Rhs l
-     = UnGuardedRhs l (Exp l) -- ^ unguarded right hand side (/exp/)
-     | GuardedRhss  l [GuardedRhs l]
-                -- ^ guarded right hand side (/gdrhs/)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A guarded right hand side @|@ /stmts/ @=@ /exp/, or @|@ /stmts/ @->@ /exp/
---   for case alternatives.
---   The guard is a series of statements when using pattern guards,
---   otherwise it will be a single qualifier expression.
-data GuardedRhs l
-     = GuardedRhs l [Stmt l] (Exp l)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A type qualified with a context.
---   An unqualified type has an empty context.
-data Type l
-     = TyForall l
-        (Maybe [TyVarBind l])
-        (Maybe (Context l))
-        (Type l)                                -- ^ qualified type
-     | TyStar  l                                -- ^ @*@, the type of types
-     | TyFun   l (Type l) (Type l)              -- ^ function type
-     | TyTuple l Boxed [Type l]                 -- ^ tuple type, possibly boxed
-     | TyUnboxedSum l [Type l]                  -- ^ unboxed tuple type
-     | TyList  l (Type l)                       -- ^ list syntax, e.g. [a], as opposed to [] a
-     | TyParArray  l (Type l)                   -- ^ parallel array syntax, e.g. [:a:]
-     | TyApp   l (Type l) (Type l)              -- ^ application of a type constructor
-     | TyVar   l (Name l)                       -- ^ type variable
-     | TyCon   l (QName l)                      -- ^ named type or type constructor
-     | TyParen l (Type l)                       -- ^ type surrounded by parentheses
-     | TyInfix l (Type l) (MaybePromotedName l)
-                          (Type l)              -- ^ infix type constructor
-     | TyKind  l (Type l) (Kind l)              -- ^ type with explicit kind signature
-     | TyPromoted l (Promoted l)                -- ^ @'K@, a promoted data type (-XDataKinds).
-     | TyEquals l (Type l) (Type l)             -- ^ type equality predicate enabled by ConstraintKinds
-     | TySplice l (Splice l)                    -- ^ template haskell splice type
-     | TyBang l (BangType l) (Unpackedness l) (Type l)           -- ^ Strict type marked with \"@!@\" or type marked with UNPACK pragma.
-     | TyWildCard l (Maybe (Name l))            -- ^ Either an anonymous of named type wildcard
-     | TyQuasiQuote l String String             -- ^ @[$/name/| /string/ |]@
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
-data MaybePromotedName l = PromotedName l (QName l) | UnpromotedName l (QName l)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Bools here are True if there was a leading quote which may be
--- left out. For example @'[k1,k2]@ means the same thing as @[k1,k2]@.
-data Promoted l
-        = PromotedInteger l Integer String -- ^ parsed value and raw string
-        | PromotedString l String String -- ^ parsed value and raw string
-        | PromotedCon l Bool (QName l)
-        | PromotedList l Bool [Type l]
-        | PromotedTuple l [Type l]
-        | PromotedUnit l
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Flag denoting whether a tuple is boxed or unboxed.
-data Boxed = Boxed | Unboxed
-  deriving (Eq,Ord,Show,Typeable,Data,Generic)
-
--- | A type variable declaration, optionally with an explicit kind annotation.
-data TyVarBind l
-    = KindedVar   l (Name l) (Kind l)  -- ^ variable binding with kind annotation
-    | UnkindedVar l (Name l)           -- ^ ordinary variable binding
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An explicit kind annotation.
-type Kind = Type
-
-
 -- | A functional dependency, given on the form
 --   l1 l2 ... ln -> r2 r3 .. rn
 data FunDep l
     = FunDep l [Name l] [Name l]
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A context is a set of assertions
-data Context l
-    = CxSingle l (Asst l)
-    | CxTuple  l [Asst l]
-    | CxEmpty  l
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Class assertions.
---   In Haskell 98, the argument would be a /tyvar/, but this definition
---   allows multiple parameters, and allows them to be /type/s.
---   Also extended with support for implicit parameters and equality constraints.
-data Asst l
-        = ClassA l (QName l) [Type l]           -- ^ ordinary class assertion
-        | AppA l (Name l) [Type l]              -- ^ constraint kind assertion, @Dict :: cxt a => Dict cxt@
-        | InfixA l (Type l) (QName l) (Type l)  -- ^ class assertion where the class name is given infix
-        | IParam l (IPName l) (Type l)          -- ^ implicit parameter assertion
-        | EqualP l (Type l) (Type l)            -- ^ type equality constraint
-        | ParenA l (Asst l)                     -- ^ parenthesised class assertion
-        | WildCardA l (Maybe (Name l))          -- ^ Context Wildcard
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | /literal/
--- Values of this type hold the abstract value of the literal, along with the
--- precise string representation used.  For example, @10@, @0o12@ and @0xa@
--- have the same value representation, but each carry a different string representation.
-data Literal l
-    = Char       l Char     String     -- ^ character literal
-    | String     l String   String     -- ^ string literal
-    | Int        l Integer  String     -- ^ integer literal
-    | Frac       l Rational String     -- ^ floating point literal
-    | PrimInt    l Integer  String     -- ^ unboxed integer literal
-    | PrimWord   l Integer  String     -- ^ unboxed word literal
-    | PrimFloat  l Rational String     -- ^ unboxed float literal
-    | PrimDouble l Rational String     -- ^ unboxed double literal
-    | PrimChar   l Char     String     -- ^ unboxed character literal
-    | PrimString l String   String     -- ^ unboxed string literal
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An indication whether a literal pattern has been negated or not.
-data Sign l
-    = Signless l
-    | Negative l
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | Haskell expressions.
-data Exp l
-    = Var l (QName l)                       -- ^ variable
-    | OverloadedLabel l String              -- ^ Overloaded label #foo
-    | IPVar l (IPName l)                    -- ^ implicit parameter variable
-    | Con l (QName l)                       -- ^ data constructor
-    | Lit l (Literal l)                     -- ^ literal constant
-    | InfixApp l (Exp l) (QOp l) (Exp l)    -- ^ infix application
-    | App l (Exp l) (Exp l)                 -- ^ ordinary application
-    | NegApp l (Exp l)                      -- ^ negation expression @-/exp/@ (unary minus)
-    | Lambda l [Pat l] (Exp l)              -- ^ lambda expression
-    | Let l (Binds l) (Exp l)               -- ^ local declarations with @let@ ... @in@ ...
-    | If l (Exp l) (Exp l) (Exp l)          -- ^ @if@ /exp/ @then@ /exp/ @else@ /exp/
-    | MultiIf l [GuardedRhs l]              -- ^ @if@ @|@ /stmts/ @->@ /exp/ ...
-    | Case l (Exp l) [Alt l]                -- ^ @case@ /exp/ @of@ /alts/
-    | Do l [Stmt l]                         -- ^ @do@-expression:
-                                            --   the last statement in the list
-                                            --   should be an expression.
-    | MDo l [Stmt l]                        -- ^ @mdo@-expression
-    | Tuple l Boxed [Exp l]                 -- ^ tuple expression
-    | UnboxedSum l Int Int (Exp l)          -- ^ unboxed sum
-    | TupleSection l Boxed [Maybe (Exp l)]  -- ^ tuple section expression, e.g. @(,,3)@
-    | List l [Exp l]                        -- ^ list expression
-    | ParArray l [Exp l]                    -- ^ parallel array expression
-    | Paren l (Exp l)                       -- ^ parenthesised expression
-    | LeftSection l (Exp l) (QOp l)         -- ^ left section @(@/exp/ /qop/@)@
-    | RightSection l (QOp l) (Exp l)        -- ^ right section @(@/qop/ /exp/@)@
-    | RecConstr l (QName l) [FieldUpdate l] -- ^ record construction expression
-    | RecUpdate l (Exp l)   [FieldUpdate l] -- ^ record update expression
-    | EnumFrom l (Exp l)                    -- ^ unbounded arithmetic sequence,
-                                            --   incrementing by 1: @[from ..]@
-    | EnumFromTo l (Exp l) (Exp l)          -- ^ bounded arithmetic sequence,
-                                            --   incrementing by 1 @[from .. to]@
-    | EnumFromThen l (Exp l) (Exp l)        -- ^ unbounded arithmetic sequence,
-                                            --   with first two elements given @[from, then ..]@
-    | EnumFromThenTo l (Exp l) (Exp l) (Exp l)
-                                            -- ^ bounded arithmetic sequence,
-                                            --   with first two elements given @[from, then .. to]@
-    | ParArrayFromTo l (Exp l) (Exp l)      -- ^ Parallel array bounded arithmetic sequence,
-                                            --   incrementing by 1 @[:from .. to:]@
-    | ParArrayFromThenTo l (Exp l) (Exp l) (Exp l)
-                                            -- ^ bounded arithmetic sequence,
-                                            --   with first two elements given @[:from, then .. to:]@
-    | ListComp l (Exp l) [QualStmt l]       -- ^ ordinary list comprehension
-    | ParComp  l (Exp l) [[QualStmt l]]     -- ^ parallel list comprehension
-    | ParArrayComp  l (Exp l) [[QualStmt l]] -- ^ parallel array comprehension
-    | ExpTypeSig l (Exp l) (Type l)         -- ^ expression with explicit type signature
-
-    | VarQuote l (QName l)                  -- ^ @'x@ for template haskell reifying of expressions
-    | TypQuote l (QName l)                  -- ^ @''T@ for template haskell reifying of types
-    | BracketExp l (Bracket l)              -- ^ template haskell bracket expression
-    | SpliceExp l (Splice l)                -- ^ template haskell splice expression
-    | QuasiQuote l String String            -- ^ quasi-quotaion: @[$/name/| /string/ |]@
-    | TypeApp l (Type l)                    -- ^ Visible type application
-
--- Hsx
-    | XTag l (XName l) [XAttr l] (Maybe (Exp l)) [Exp l]
-                                            -- ^ xml element, with attributes and children
-    | XETag l (XName l) [XAttr l] (Maybe (Exp l))
-                                            -- ^ empty xml element, with attributes
-    | XPcdata l String                      -- ^ PCDATA child element
-    | XExpTag l (Exp l)                     -- ^ escaped haskell expression inside xml
-    | XChildTag l [Exp l]                   -- ^ children of an xml element
-
-
--- Pragmas
-    | CorePragma l      String (Exp l)      -- ^ CORE pragma
-    | SCCPragma  l      String (Exp l)      -- ^ SCC pragma
-    | GenPragma  l      String (Int, Int) (Int, Int) (Exp l)
-                                            -- ^ GENERATED pragma
-
--- Arrows
-    | Proc            l (Pat l) (Exp l)     -- ^ arrows proc: @proc@ /pat/ @->@ /exp/
-    | LeftArrApp      l (Exp l) (Exp l)     -- ^ arrow application (from left): /exp/ @-<@ /exp/
-    | RightArrApp     l (Exp l) (Exp l)     -- ^ arrow application (from right): /exp/ @>-@ /exp/
-    | LeftArrHighApp  l (Exp l) (Exp l)     -- ^ higher-order arrow application (from left): /exp/ @-<<@ /exp/
-    | RightArrHighApp l (Exp l) (Exp l)     -- ^ higher-order arrow application (from right): /exp/ @>>-@ /exp/
-
--- LambdaCase
-    | LCase l [Alt l]                       -- ^ @\case@ /alts/
-
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | The name of an xml element or attribute,
---   possibly qualified with a namespace.
-data XName l
-    = XName l String              -- <name ...
-    | XDomName l String String    -- <dom:name ...
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An xml attribute, which is a name-expression pair.
-data XAttr l = XAttr l (XName l) (Exp l)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A template haskell bracket expression.
-data Bracket l
-    = ExpBracket l (Exp l)        -- ^ expression bracket: @[| ... |]@
-    | PatBracket l (Pat l)        -- ^ pattern bracket: @[p| ... |]@
-    | TypeBracket l (Type l)      -- ^ type bracket: @[t| ... |]@
-    | DeclBracket l [Decl l]      -- ^ declaration bracket: @[d| ... |]@
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A template haskell splice expression
-data Splice l
-    = IdSplice l String           -- ^ variable splice: @$var@
-    | ParenSplice l (Exp l)       -- ^ parenthesised expression splice: @$(/exp/)@
   deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
 
 -- | The safety of a foreign function call.
@@ -897,108 +630,6 @@ data RuleVar l
 data WarningText l
     = DeprText l String
     | WarnText l String
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
-
--- | A pattern, to be matched against a value.
-data Pat l
-    = PVar l (Name l)                       -- ^ variable
-    | PLit l (Sign l) (Literal l)           -- ^ literal constant
-    | PNPlusK l (Name l) Integer            -- ^ n+k pattern
-    | PInfixApp l (Pat l) (QName l) (Pat l) -- ^ pattern with an infix data constructor
-    | PApp l (QName l) [Pat l]              -- ^ data constructor and argument patterns
-    | PTuple l Boxed [Pat l]                -- ^ tuple pattern
-    | PUnboxedSum l Int Int (Pat l)         -- ^ unboxed sum
-    | PList l [Pat l]                       -- ^ list pattern
-    | PParen l (Pat l)                      -- ^ parenthesized pattern
-    | PRec l (QName l) [PatField l]         -- ^ labelled pattern, record style
-    | PAsPat l (Name l) (Pat l)             -- ^ @\@@-pattern
-    | PWildCard l                           -- ^ wildcard pattern: @_@
-    | PIrrPat l (Pat l)                     -- ^ irrefutable pattern: @~/pat/@
-    | PatTypeSig l (Pat l) (Type l)         -- ^ pattern with type signature
-    | PViewPat l (Exp l) (Pat l)            -- ^ view patterns of the form @(/exp/ -> /pat/)@
-    | PRPat l [RPat l]                      -- ^ regular list pattern
-    | PXTag l (XName l) [PXAttr l] (Maybe (Pat l)) [Pat l]
-                                            -- ^ XML element pattern
-    | PXETag l (XName l) [PXAttr l] (Maybe (Pat l))
-                                            -- ^ XML singleton element pattern
-    | PXPcdata l String                     -- ^ XML PCDATA pattern
-    | PXPatTag l (Pat l)                    -- ^ XML embedded pattern
-    | PXRPats  l [RPat l]                   -- ^ XML regular list pattern
-    | PSplice l (Splice l)                  -- ^ template haskell splice pattern
-    | PQuasiQuote l String String           -- ^ quasi quote pattern: @[$/name/| /string/ |]@
-    | PBangPat l (Pat l)                    -- ^ strict (bang) pattern: @f !x = ...@
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An XML attribute in a pattern.
-data PXAttr l = PXAttr l (XName l) (Pat l)
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A regular pattern operator.
-data RPatOp l
-    = RPStar  l  -- ^ @*@ = 0 or more
-    | RPStarG l  -- ^ @*!@ = 0 or more, greedy
-    | RPPlus  l  -- ^ @+@ = 1 or more
-    | RPPlusG l  -- ^ @+!@ = 1 or more, greedy
-    | RPOpt   l  -- ^ @?@ = 0 or 1
-    | RPOptG  l  -- ^ @?!@ = 0 or 1, greedy
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An entity in a regular pattern.
-data RPat l
-    = RPOp l (RPat l) (RPatOp l)   -- ^ operator pattern, e.g. pat*
-    | RPEither l (RPat l) (RPat l) -- ^ choice pattern, e.g. (1 | 2)
-    | RPSeq l [RPat l]             -- ^ sequence pattern, e.g. (| 1, 2, 3 |)
-    | RPGuard l (Pat l) [Stmt l]   -- ^ guarded pattern, e.g. (| p | p < 3 |)
-    | RPCAs l (Name l) (RPat l)    -- ^ non-linear variable binding, e.g. (foo\@:(1 | 2))*
-    | RPAs l (Name l) (RPat l)     -- ^ linear variable binding, e.g. foo\@(1 | 2)
-    | RPParen l (RPat l)           -- ^ parenthesised pattern, e.g. (2*)
-    | RPPat l (Pat l)              -- ^ an ordinary pattern
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An /fpat/ in a labeled record pattern.
-data PatField l
-    = PFieldPat l (QName l) (Pat l)     -- ^ ordinary label-pattern pair
-    | PFieldPun l (QName l)             -- ^ record field pun
-    | PFieldWildcard l                  -- ^ record field wildcard
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A statement, representing both a /stmt/ in a @do@-expression,
---   an ordinary /qual/ in a list comprehension, as well as a /stmt/
---   in a pattern guard.
-data Stmt l
-    = Generator l (Pat l) (Exp l)
-                            -- ^ a generator: /pat/ @<-@ /exp/
-    | Qualifier l (Exp l)   -- ^ an /exp/ by itself: in a @do@-expression,
-                            --   an action whose result is discarded;
-                            --   in a list comprehension and pattern guard,
-                            --   a guard expression
-    | LetStmt l (Binds l)   -- ^ local bindings
-    | RecStmt l [Stmt l]    -- ^ a recursive binding group for arrows
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | A general /transqual/ in a list comprehension,
---   which could potentially be a transform of the kind
---   enabled by TransformListComp.
-data QualStmt l
-    = QualStmt     l (Stmt l)         -- ^ an ordinary statement
-    | ThenTrans    l (Exp l)          -- ^ @then@ /exp/
-    | ThenBy       l (Exp l) (Exp l)  -- ^ @then@ /exp/ @by@ /exp/
-    | GroupBy      l (Exp l)          -- ^ @then@ @group@ @by@ /exp/
-    | GroupUsing   l (Exp l)          -- ^ @then@ @group@ @using@ /exp/
-    | GroupByUsing l (Exp l) (Exp l)  -- ^ @then@ @group@ @by@ /exp/ @using@ /exp/
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An /fbind/ in a labeled construction or update expression.
-data FieldUpdate l
-    = FieldUpdate l (QName l) (Exp l)    -- ^ ordinary label-expresion pair
-    | FieldPun l (QName l)               -- ^ record field pun
-    | FieldWildcard l                    -- ^ record field wildcard
-  deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
-
--- | An /alt/ alternative in a @case@ expression.
-data Alt l
-    = Alt l (Pat l) (Rhs l) (Maybe (Binds l))
   deriving (Eq,Ord,Show,Typeable,Data,Foldable,Traversable,Functor,Generic)
 
 -----------------------------------------------------------------------------
